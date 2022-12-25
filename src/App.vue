@@ -1,16 +1,25 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
+import { api } from './api/gifts'
+import { Gift } from "./types/types"
 
 import Form from './components/Form.vue'
 
-type Gift = { gift: string; image: string; quantity: number; id?: string; addresse: string }
 
 const gifts = ref<Gift[]>([])
 const showModal = ref(false)
 const isEdit = ref(false)
+const isLoading = ref(false)
 
-const values = reactive({ value: '', quantity: 0, image: '', addressee: '', id: '' })
+const values = reactive({ value: '', quantity: 0, image: '', addressee: '', id: '', price: 0 })
+
+function getRandomGifts() {
+  const gifts = ["Medias", "Zapatillas", "Macbook", "iMac", "Laptop", "Auriculares", "Mouse"]
+  const getRandom = Math.floor(Math.random() * gifts.length) - 1
+  values.value = gifts.at(getRandom) || '' 
+}
+
 
 function handleModal() {
   showModal.value = !showModal.value
@@ -28,7 +37,7 @@ function handleAdd() {
 
   gifts.value = [
     ...gifts.value,
-    { gift: values.value, quantity: values.quantity, image: values.image, addresse: values.addressee, id: nanoid() },
+    { gift: values.value, quantity: values.quantity, image: values.image, addresse: values.addressee, price: values.price, id: nanoid() },
   ]
 
   return handleResetForm()
@@ -53,8 +62,9 @@ function handleEditGift(id: string) {
   if (gifts.value.find((gift) => gift.id === id)) {
     const editGift = ref<Gift[]>(
       gifts.value.map((gift) => {
-        if (gift.id === values.id)
+        if (gift.id === values.id) {
           return { ...gift, gift: values.value, quantity: values.quantity, addresse: values.addressee, image: values.image }
+        }
         return gift
       })
     )
@@ -66,14 +76,16 @@ function handleEditGift(id: string) {
   }
 }
 
-watch(gifts, () => {
-  localStorage.setItem('gifts', JSON.stringify(gifts.value))
-})
+watch(gifts, () => localStorage.setItem('gifts', JSON.stringify(gifts.value)))
 
-onMounted(() => {
-  if (localStorage.getItem('gifts')) {
-    const storageValues: Gift[] = JSON.parse(localStorage.getItem('gifts') as string)
-    return (gifts.value = storageValues)
+onMounted(async () => {
+  try {
+    isLoading.value = true
+    await api.list().then((res) => (gifts.value = res))
+    return (isLoading.value = false)
+  } catch (error) {
+    isLoading.value = true
+    if (error instanceof Error) return console.error(error.message)
   }
 })
 </script>
@@ -90,6 +102,7 @@ onMounted(() => {
       <Form
         v-if="showModal"
         @keyup.esc="showModal = !showModal"
+        :getRandomGifts="getRandomGifts"
         :isEdit="isEdit"
         :values="values"
         :handleResetForm="handleResetForm"
@@ -99,9 +112,18 @@ onMounted(() => {
         @cancelEdit="isEdit = false"
       />
 
-      <button class="mt-4 bg-soft_red p-4 text-white rounded-md border-none focus:outline-outline_red focus:outline focus:outline-offset-2 focus:outline-4" @click="handleModal" autofocus>Add gift ✨</button>
+      <button
+        class="mt-4 bg-soft_red p-4 text-white rounded-md border-none focus:outline-outline_red focus:outline focus:outline-offset-2 focus:outline-4"
+        @click="handleModal"
+        autofocus
+      >
+        Add gift ✨
+      </button>
 
-      <small class="text-center mt-4 text-white" v-if="!gifts.length">No gifts grinch! add something</small>
+      <template v-if="isLoading">
+        <p class="text-center mt-4 text-white">Loading...</p>
+      </template>
+      <small class="text-center mt-4 text-white" v-if="!gifts.length && !isLoading">No gifts grinch! add something</small>
 
       <ul class="mt-4 text-custom_dark flex flex-col gap-2" v-if="gifts.length">
         <li v-for="gift in gifts" :key="gift.id" class="flex justify-between items-center w-full text-white">
@@ -112,10 +134,9 @@ onMounted(() => {
               class="min-w-[4rem] max-w-[4rem] min-h-[4rem] max-h-20 rounded-md object-cover"
             />
             <span>
-              {{ gift.gift }}
+              {{ gift.gift }} <small v-if="gift.quantity !== 0">({{ gift.quantity }})</small> <small v-if="gift.price"> - {{ gift.price.toLocaleString("es-ar", {style: "currency", currency: "ARS", }) }}</small>
               <p class="text-sm text-gray-300">{{ gift.addresse }}</p>
             </span>
-            <small v-if="gift.quantity !== 0">({{ gift.quantity }})</small>
           </p>
           <span class="flex gap-4">
             <button class="text-gray-300" aria-label="edit gift" @click="handleEditModal(gift)">&#9998;</button>

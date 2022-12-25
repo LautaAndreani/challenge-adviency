@@ -15,8 +15,12 @@ const props =defineProps({
     type: Function as PropType<() => void>,
     required: true,
   }, 
+  getRandomGifts: {
+    type: Function as PropType<() => void>,
+    required: true,
+  }, 
   values: {
-    type: Object as PropType<{ value: string; quantity: number; image: string, addressee: string, id?: string }>,
+    type: Object as PropType<{ value: string; quantity: number; image: string, addressee: string, id?: string, price:number }>,
     required: true,
     default: { value: '', quantity: 0, image: '', addressee: '' },
   },
@@ -45,14 +49,18 @@ function handleCancelEdit() {
       </div>
 
       <form class="mt-5 flex flex-col gap-4" @submit.prevent="handleSetGift">
-        <input
-          type="text"
-          placeholder="Type your gift"
-          v-model="values.value"
-          class="outline-none p-2 rounded-md bg-slate-100 placeholder:text-gray-400"
-          v-focus
-        />
+        <span class="flex gap-1">
+          <input
+            type="text"
+            placeholder="Type your gift"
+            v-model="values.value"
+            class="outline-none p-2 rounded-md bg-slate-100 placeholder:text-gray-400 w-52"
+            v-focus
+          />
+          <button class="bg-gray-200 p-2 rounded-md whitespace-nowrap" @click.prevent="getRandomGifts">surprise me</button>
+        </span>
         <input type="url" placeholder="Paste image link" class=" outline-none rounded-md p-2" v-model="values.image" />
+        <input type="number" minlength="0" placeholder="Price" class="outline-none rounded-md p-2" v-model="values.price" />
         <input
           type="text"
           placeholder="Who is going to receive it?"
