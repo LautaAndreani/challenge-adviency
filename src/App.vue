@@ -3,6 +3,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { nanoid } from 'nanoid'
 import { api } from './api/gifts'
 import { Gift } from "./types/types"
+import { getQuantityPrice, getTotalPrice, formatCurrency } from "./utils/utils"
 
 import Form from './components/Form.vue'
 
@@ -30,6 +31,7 @@ function handleResetForm() {
   values.value = ''
   values.image = ''
   values.addressee = ''
+  values.price = 0
 }
 
 function handleAdd() {
@@ -37,7 +39,7 @@ function handleAdd() {
 
   gifts.value = [
     ...gifts.value,
-    { gift: values.value, quantity: values.quantity, image: values.image, addresse: values.addressee, price: values.price, id: nanoid() },
+    { gift: values.value, quantity: values.quantity, image: values.image, addresse: values.addressee, price: getQuantityPrice(values.quantity,values.price), id: nanoid() },
   ]
 
   return handleResetForm()
@@ -54,6 +56,7 @@ function handleEditModal(gift: Gift) {
   values.addressee = gift.addresse
   values.image = gift.image
   values.quantity = gift.quantity
+  values.price = gift.price
   values.id = gift.id!!
   handleModal()
 }
@@ -63,7 +66,7 @@ function handleEditGift(id: string) {
     const editGift = ref<Gift[]>(
       gifts.value.map((gift) => {
         if (gift.id === values.id) {
-          return { ...gift, gift: values.value, quantity: values.quantity, addresse: values.addressee, image: values.image }
+          return { ...gift, gift: values.value, quantity: values.quantity, addresse: values.addressee, price: getQuantityPrice(values.quantity, values.price, gift.price), image: values.image }
         }
         return gift
       })
@@ -134,7 +137,7 @@ onMounted(async () => {
               class="min-w-[4rem] max-w-[4rem] min-h-[4rem] max-h-20 rounded-md object-cover"
             />
             <span>
-              {{ gift.gift }} <small v-if="gift.quantity !== 0">({{ gift.quantity }})</small> <small v-if="gift.price"> - {{ gift.price.toLocaleString("es-ar", {style: "currency", currency: "ARS", }) }}</small>
+              {{ gift.gift }} <small v-if="gift.quantity !== 0">({{ gift.quantity }})</small> <small v-if="gift.price"> - {{ formatCurrency(gift.price) }}</small>
               <p class="text-sm text-gray-300">{{ gift.addresse }}</p>
             </span>
           </p>
@@ -146,6 +149,12 @@ onMounted(async () => {
           </span>
         </li>
       </ul>
+
+      
+      <span class="text-white text-center flex flex-col gap-2" v-if="gifts.length">
+        <hr class="mt-4 invert-[0.3]">
+        Total: {{ getTotalPrice(gifts) }}
+      </span>
 
       <button v-if="gifts.length" class="bg-soft_red p-2 mt-4 rounded-md text-white hover:bg-red-400" @click="gifts = []">
         Delete all 🗑

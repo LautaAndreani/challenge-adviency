@@ -2,7 +2,7 @@
 import { PropType, VueElement } from 'vue'
 
 const emit = defineEmits(['cancelEdit'])
-const props =defineProps({
+const props = defineProps({
   handleAdd: {
     type: Function as PropType<() => void>,
     required: true,
@@ -42,7 +42,7 @@ function handleCancelEdit() {
 </script>
 
 <template>
-  <div class="absolute top-0 w-full h-screen left-0 flex justify-center items-center backdrop-blur-md bg-slate-600 bg-opacity-70">
+  <div class="absolute top-0 w-full h-screen left-0 flex justify-center items-center backdrop-blur-md bg-slate-600 bg-opacity-70 z-10">
     <div class="container max-w-[25rem] bg-gray-300 p-10 rounded-md">
       <div class="close-container w-full flex justify-end" v-if="!isEdit">
         <button class="bg-soft_red py-1 px-2 rounded-md text-white" @click="handleModal">×</button>
@@ -60,7 +60,10 @@ function handleCancelEdit() {
           <button class="bg-gray-200 p-2 rounded-md whitespace-nowrap" @click.prevent="getRandomGifts">surprise me</button>
         </span>
         <input type="url" placeholder="Paste image link" class=" outline-none rounded-md p-2" v-model="values.image" />
-        <input type="number" minlength="0" placeholder="Price" class="outline-none rounded-md p-2" v-model="values.price" />
+        <span class="flex items-center gap-1">
+          <span class="bg-gray-200 p-2 rounded-md">$</span>
+          <input type="number" minlength="0" placeholder="Price" class="outline-none rounded-md p-2 w-full" v-model="values.price" />
+        </span>
         <input
           type="text"
           placeholder="Who is going to receive it?"
